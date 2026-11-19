@@ -49,6 +49,8 @@ const {
     getBridgeToken,
 } = require('./config');
 
+const { isBotDisabled } = require('./bot-switch');
+
 process.on('uncaughtException', (err) => log('UNCAUGHT: ' + (err.stack || err), 'ERROR'));
 process.on('unhandledRejection', (reason) => log('UNHANDLED: ' + reason, 'ERROR'));
 
@@ -909,7 +911,12 @@ telegram('getMe')
                 }
             }).catch(e => log(`setMyCommands error: ${e.message}`, 'WARN'));
 
-            poll();
+            if (isBotDisabled(process.env, config)) {
+                // Neutralisé : pas de boucle getUpdates, telegram() refuse aussi les envois.
+                log('[Bot] Désactivé (SEEKERCLAW_BOT_DISABLED ou config.json→botDisabled) : aucune écoute, aucun envoi.', 'WARN');
+            } else {
+                poll();
+            }
             startClaudeUsagePolling();
 
             // P2.4b: Auto-resume fresh incomplete checkpoints after startup

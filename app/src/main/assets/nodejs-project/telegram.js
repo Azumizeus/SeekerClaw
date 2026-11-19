@@ -7,7 +7,8 @@ const fs = require('fs');
 const https = require('https');
 const path = require('path');
 
-const { BOT_TOKEN, log, workDir, getOwnerId, RICH_MESSAGES_ENABLED } = require('./config');
+const { BOT_TOKEN, config, log, workDir, getOwnerId, RICH_MESSAGES_ENABLED } = require('./config');
+const { isBotDisabled } = require('./bot-switch');
 const { redactSecrets } = require('./security');
 const { httpRequest } = require('./http');
 const { sanitizeRichMarkdown } = require('./rich-markdown');
@@ -18,6 +19,11 @@ const { isBlockedAddress } = require('./web'); // BAT-1088: shared SSRF host cla
 // ============================================================================
 
 async function telegram(method, body = null) {
+    // Neutralisé : aucune requête ne part vers l'API Telegram.
+    // `disabled: true` distingue l'interrupteur d'une vraie erreur réseau.
+    if (isBotDisabled(process.env, config)) {
+        return { ok: false, disabled: true, description: 'Bot désactivé (SEEKERCLAW_BOT_DISABLED).' };
+    }
     const res = await httpRequest({
         hostname: 'api.telegram.org',
         path: `/bot${BOT_TOKEN}/${method}`,
@@ -38,6 +44,10 @@ async function telegram(method, body = null) {
  * @returns {Promise<Object>} Telegram API response
  */
 async function telegramSendFile(method, params, fieldName, filePath, fileName, fileSize) {
+    // Neutralisé : aucun envoi de fichier ne part vers l'API Telegram.
+    if (isBotDisabled(process.env, config)) {
+        return { ok: false, disabled: true, description: 'Bot désactivé (SEEKERCLAW_BOT_DISABLED).' };
+    }
     const boundary = '----TgFile' + crypto.randomBytes(16).toString('hex');
 
     // Sanitize header values: strip CR/LF/null/Unicode line separators and escape quotes

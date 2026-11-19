@@ -58,6 +58,9 @@ const BUNDLE = path.join(REPO_ROOT, 'app', 'src', 'main', 'assets', 'nodejs-proj
 //   - load native/WASM modules
 const LOAD_TARGETS = [
     'silent-reply.js',
+    // Interrupteur du bot (SEEKERCLAW_BOT_DISABLED / config.json→botDisabled) :
+    // helpers purs, aucune IO, aucun accès à config.js.
+    'bot-switch.js',
     // BAT-1186: pure anchor-preserving history-trim primitives — no deps, no IO.
     'history-trim.js',
     'turn-goal.js',
